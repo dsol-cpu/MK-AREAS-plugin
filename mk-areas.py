@@ -4,37 +4,56 @@
 #Access a collection of cubes' properties
 #custom ui blender library import
 
+
+bl_info = {
+    "name": "Import KMP AREAS",
+    "blender": (2, 80, 0),
+    "category": "Object",
+}
+
 import bpy
+import os
 
-class HelloWorldPanel:
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Tools"
-    bl_options = {"DEFAULT_CLOSED"}
+class kmp_import(bpy.types.PropertyGroup):
+    """Object Cursor Array"""
+    bl_idname = ""
+    bl_label = "Import KMP AREAS"
+    bl_options = {'REGISTER', 'UNDO'}        
+    
+    def execute (self, context):
+        scene = context.scene
+        #Decode the KMP file and get the AREAS dataset 
+        os.system("wkmpt DECODE course.kmp")
+
+        #Parse text file for all AREA objects
+        file = open("course.txt")
+        lines = file.readlines().split("")        
+        
+        #Make a new collection, make a new cube with the information and link it to the new collection iteratively
+        bpy.ops.outliner.collection_new(nested=False)      
+        
+        #arr = [[0]*cols]*rows
+
+        #create new collection for AREA cubes
+        areas_collection = bpy.data.collections.new("AREA Collection")  
+        
+        #populate collection with cubes with their properties in their name        
+        
+        return {'FINISHED'}
+    
+    #def save():
+    
+#    def  
+#        bpy.ops.primitive.primitive_cube_add(2,False,'World',(),()
+    
+
+def register():
+    bpy.utils.register_class(KMP_Import)
 
 
-class HELLO_PT_World1(HelloWorldPanel, bpy.types.Panel):
-    bl_idname = "HELLO_PT_World1"
-    bl_label = "Panel 1"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.label(text="This is the main panel.")
+def unregister():
+    bpy.utils.unregister_class(KMP_Import)
 
 
-class HELLO_PT_World2(HelloWorldPanel, bpy.types.Panel):
-    bl_parent_id = "HELLO_PT_World1"
-    bl_label = "Panel 2"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.label(text="First Sub Panel of Panel 1.")
-
-
-class HELLO_PT_World3(HelloWorldPanel, bpy.types.Panel):
-    bl_parent_id = "HELLO_PT_World1"
-    bl_label = "Panel 3"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.label(text="Second Sub Panel of Panel 1.")
+if __name__ == "__main__":
+    register()
