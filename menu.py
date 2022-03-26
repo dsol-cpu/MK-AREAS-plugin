@@ -1,45 +1,10 @@
 import bpy
+import os
 
-class kmp_import(bpy.types.PropertyGroup):
-    """Object Array"""
-    bl_idname = ""
-    bl_label = "Import KMP AREAS"
-    bl_options = {'REGISTER', 'UNDO'}        
-    
-    def invoke (self, context):
-        
-        import_kmp(self)
-   
-        return {'FINISHED'}
-    
-def import_kmp(self, context):
-    print("importing!")
-    
-    #Decode the KMP file and get the AREAS dataset 
-    os.system("wkmpt DECODE course.kmp")
-    self.report({'INFO'}, 'Printing report to Info window.')
+#i swear im so sorry
+path = input("input the absolute path of the folder your kmp file is in pls and thx <3")
 
-    #Parse text file for all AREA objects
-    file = open("course.txt")
-    lines = file.readlines().split("")
-    print(lines)
-    
-    #Make a new collection, 
-    bpy.ops.outliner.collection_new(nested=False)
-    
-    current_index = 0
-    #make a new cube with the information and link it to the new collection iteratively
-    for i in range (0, len(lines)/16):
-        for j in range(0, 16):
-            #populate collection with cubes with their properties in their name     
-            create_cube(current_index, lines)
-        current_index+=1
-    
-def export_kmp(self, context):
-    #get collection with info and iterate through all cubes in order and export in the same format as kmp
-    self.report("kmp file exported!")
-
-class HelloWorldPanel(bpy.types.Panel):
+class KMP_Import(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
     bl_label = "Kmp area plugin"
     bl_idname = "OBJECT_PT_hello"
@@ -62,14 +27,56 @@ class HelloWorldPanel(bpy.types.Panel):
 
         row = layout.row()
         row.operator("mesh.primitive_cube_add")
+        import_kmp(context)
+          
+    
+def import_kmp(context):
+    print("importing!")
+    #Decode the KMP file and get the AREAS dataset 
+    os.system("wkmpt DECODE " + path + "course.kmp")
 
+    #Parse text file for all AREA objects
+    file = open(path + "course.txt")
+    lines = file.readlines()
+    print(lines)
+    
+    #Make a new collection, 
+    bpy.ops.outliner.collection_new(nested=False)
+    
+    current_index = 0
+    #make a new cube with the information and link it to the new collection iteratively
+    for i in range (0, len(lines)/16):
+        for j in range(0, 16):
+            #populate collection with cubes with their properties in their name     
+            create_cube(current_index, lines)
+        current_index+=1
 
+def create_cube(current_index, lines):
+    place_in_file = current_index * 16
+    location = lines[5+place_in_file:7+place_in_file]
+    rotation = lines[8+place_in_file:10+place_in_file]
+    scale = lines[11+place_in_file:13+place_in_file]
+
+    bpy.ops.primitive.primitive_cube_add(2,False,'World',location,scale)
+    bpy.context.active_object.rotation_mode = 'XYZ'
+    bpy.context.active_object.rotation_euler = rotation
+    bpy.ops.object.move_to_collection(collection_index=current_index)
+    cube = bpy.context.selected_objects[0]
+    cube.name = lines
+    
+#def export_kmp(self, context):
+#    #get collection with info and iterate through all cubes in order and export in the same format as kmp
+#    self.report("kmp file exported!")    
+
+_classes = [KMP_Import]
 def register():
-    bpy.utils.register_class(HelloWorldPanel, kmp_import, import_kmp, export_kmp)
+    for element in _classes:
+        bpy.utils.register_class(element)
 
 
 def unregister():
-    bpy.utils.unregister_class(HelloWorldPanel)
+    for element in _classes:
+        bpy.utils.unregister_class(element)
 
 
 if __name__ == "__main__":
