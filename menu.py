@@ -39,6 +39,9 @@ def import_kmp(context):
     file = open(path + "course.txt")
     lines = file.readlines()
     write_kmp(lines)
+
+
+
     '''
     #Make a new collection, 
     bpy.ops.outliner.collection_new(nested=False)
@@ -59,15 +62,28 @@ should get you an idea of what's what. (Flashbacks to hashing in data structures
 '''
 def write_kmp(lines) :
     hash_count = 0
+    area_sector_count = 0
     print("writing!")
+    txtFileString = []
     with open(path +'output.txt', 'w') as f:
         for line in lines:
             if "###############################################################################" in line:
                 hash_count += 1          # Is this quadratic time? Yes, now hush
                 print('hash!')
-            if hash_count  == 5 :
-                f.write(line)
-    print(hash_count)
+                #5th hash symbol line
+            if hash_count == 5:
+                if "#------------------------------------------------------------------------------" in line:
+                    area_sector_count += 1
+                    print("working")
+                    #2nd hash symbol with hyphens line
+                if area_sector_count >= 2 and "#------------------------------------------------------------------------------" not in line:
+                    #Grab elements from current line that are not >/spaces/empty/'/n'
+                    txtFileString.append(line)
+                    f.write(line)
+    print(txtFileString)
+
+    #Now we want to parse from the AREA section and use each "#------" section
+    #and then trim the > symbol and split the output into items
 
 
 def create_cube(current_index, lines):
@@ -85,7 +101,7 @@ def create_cube(current_index, lines):
     
 #def export_kmp(self, context):
 #    #get collection with info and iterate through all cubes in order and export in the same format as kmp
-#    self.report("kmp file exported!")    
+#    print("kmp file exported!")    
 
 _classes = [KMP_Import]
 def register():
