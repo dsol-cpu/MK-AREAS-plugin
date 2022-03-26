@@ -38,8 +38,8 @@ def import_kmp(context):
     #Parse text file for all AREA objects
     file = open(path + "course.txt")
     lines = file.readlines()
-    print(lines)
-    
+    write_kmp(lines)
+    '''
     #Make a new collection, 
     bpy.ops.outliner.collection_new(nested=False)
     
@@ -49,7 +49,26 @@ def import_kmp(context):
         for j in range(0, 16):
             #populate collection with cubes with their properties in their name     
             create_cube(current_index, lines)
-        current_index+=1
+        current_index+=1'''
+
+'''
+Note: I have the write_kmp function currently just write the existing kmp settings
+This is to just to make things managable for debugging / coding.
+I'll be working on the writing some sample stuff shortly hereafter, but this
+should get you an idea of what's what. (Flashbacks to hashing in data structures)
+'''
+def write_kmp(lines) :
+    hash_count = 0
+    print("writing!")
+    with open(path +'output.txt', 'w') as f:
+        for line in lines:
+            if "###############################################################################" in line:
+                hash_count += 1          # Is this quadratic time? Yes, now hush
+                print('hash!')
+            if hash_count  == 5 :
+                f.write(line)
+    print(hash_count)
+
 
 def create_cube(current_index, lines):
     place_in_file = current_index * 16
