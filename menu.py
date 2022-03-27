@@ -26,11 +26,13 @@ class KMP_Import(bpy.types.Panel):
         scene = context.scene
         layout = self.layout
         
-        row = layout.row()
-        row.prop(scene, "myops.scale_view")
+#        row = layout.row()
+#        row.prop(scene, "myops.scale_view")
 
         row = layout.row()
         row.operator("myops.add_area_cube")
+        row = layout.row()
+        row.operator("myops.export_kmp")
 
 
 class AREA_Cube(bpy.types.Operator):
@@ -42,7 +44,13 @@ class AREA_Cube(bpy.types.Operator):
         sample_string_list = Import_KMP(context)       
         Cube_Gen(sample_string_list)
         return {'FINISHED'}
-
+    
+class Export_KMP(bpy.types.Operator):
+    bl_idname = "myops.export_kmp"
+    bl_label = "Export KMP"
+    def execute(self, context):
+        export_kmp(self, context)
+        return {'FINISHED'}
 
 class Scale_View(bpy.types.Operator):
     bl_idname = "myops.scale_view"
@@ -97,8 +105,16 @@ def Cube_Gen(sample_string_list):
     position = []
     rotation = []
     scale = []
-    collection = bpy.context.blend_data.collections.new(name='Area')
-    bpy.context.collection.children.link(collection)
+#    collection = bpy.context.blend_data.collections.new(name='Area')
+#    bpy.context.collection.children.link(collection)
+
+    if bpy.data.collections.get('Area'):
+        cubes_collection = bpy.data.collections['Area']
+    else:
+        cubes_collection = bpy.data.collections.new('Area')
+        bpy.context.scene.collection.children.link(cubes_collection)
+
+    bpy.context.view_layer.active_layer_collection = bpy.context.view_layer.layer_collection.children['Area']
     
     if not sample_string_list:
         return []
@@ -116,19 +132,46 @@ def Cube_Gen(sample_string_list):
                 elif i == 3:
                     
                     bpy.ops.mesh.primitive_cube_add()
+                    cube = bpy.context.selected_objects[0]
                     bpy.context.active_object.location = position
                     bpy.context.active_object.rotation_euler = rotation
                     bpy.context.active_object.scale = scale
                     bpy.context.active_object.name = "".join(element)
-                    collection.objects.link(bpy.context.active_object)                   
+                    #collection.objects.link(bpy.context.active_object)                   
 
                     current_index += 1
 
-    #def export_kmp(self, context):
-#    #get collection with info and iterate through all cubes in order and export in the same format as kmp
-#    print("kmp file exported!")
+    # Possable todo: make it so duplacates don't show up agan when you press the button.
 
-_classes = [KMP_Import, AREA_Cube, Scale_View]
+
+def export_kmp(self, context):
+    #get collection with info and iterate through all cubes in order and export in the same format as kmp
+
+    #Write to the start of the area section
+    file = open(path + "course.txt")
+    lines = file.readlines()
+    hash_count = 0
+    print("writing!")
+    sample_string_list = []
+    with open(path +'output_kmp.txt', 'w') as f:
+        for line in lines:
+            if "###############################################################################" in line:
+                hash_count += 1          # Is this quadratic time? Yes, now hush
+                #The area section is the 5th hash symbol line
+            if hash_count < 5:
+                f.write(line)
+    
+    
+    for collection in bpy.data.collections:
+        if collection.name != "Area" :
+            pass
+        else:
+            for obj in collection.all_objects:
+                print("obj: ", obj.name)
+
+
+
+_classes = [KMP_Import, AREA_Cube, Scale_View, Export_KMP]
 def register():
     for element in _classes:
         bpy.utils.register_class(element)
