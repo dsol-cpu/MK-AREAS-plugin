@@ -15,12 +15,10 @@ else:
     print("What are you on?")
 
 
-
-sample_string_list = []
 class KMP_Import(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
     bl_label = "Kmp area plugin"
-    bl_idname = "OBJECT_PT_hello"
+    bl_idname = "OBJ_PT_hello"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
@@ -31,7 +29,18 @@ class KMP_Import(bpy.types.Panel):
         row = layout.row()
         row.operator("myops.add_area_cube")
         
-          
+        
+
+class AREA_Cube(bpy.types.Operator):
+    bl_idname = "myops.add_area_cube"
+    bl_label = "Add AREA cubes"
+    def execute(self, context):
+        #Make a new collection, 
+        #bpy.ops.outliner.collection_new(nested=False)
+        sample_string_list = import_kmp(context)       
+        Cube_Gen(sample_string_list)
+        return {'FINISHED'}
+
     
 def import_kmp(context):
     print("importing!")
@@ -41,21 +50,7 @@ def import_kmp(context):
     #Parse text file for all AREA objects
     file = open(path + "course.txt")
     lines = file.readlines()
-    sample_string_list = write_kmp(lines)
-    print(sample_string_list)
-    return(sample_string_list)
-
-    '''
-    #Make a new collection, 
-    bpy.ops.outliner.collection_new(nested=False)
-    
-    current_index = 0
-    #make a new cube with the information and link it to the new collection iteratively
-    for i in range (0, len(lines)/16):
-        for j in range(0, 16):
-            #populate collection with cubes with their properties in their name     
-            create_cube(current_index, lines)
-        current_index+=1'''
+    return(write_kmp(lines))
 
 #writes out the area into a much more readable format, return the list of list
 def write_kmp(lines) :
@@ -73,7 +68,6 @@ def write_kmp(lines) :
                 f.write(line)
                 if "#------------------------------------------------------------------------------" in line:
                     area_sector_count += 1
-#                    print("working")
                     #2nd hash symbol with hyphens line
                 if area_sector_count >= 2 and "#------------------------------------------------------------------------------" not in line:
                     #Grab elements from current line that are not >/spaces/empty/'/n'
@@ -83,44 +77,41 @@ def write_kmp(lines) :
                         sample_string_list.append(temp)
                         temp = []
                     f.write(','.join(splitted_line)+'\n')
-        print(sample_string_list)
         return(sample_string_list)
 
-    #Now we want to parse from the AREA section and use each "#------" section
-    #and then trim the > symbol and split the output into items
 
-class AREA_Cube(bpy.types.Operator):
-    bl_idname = "myops.add_area_cube"
-    bl_label = "Add AREA cubes"
-    def execute(self, context):
-        sample_string_list = []
-        print(sample_string_list)
-        sample_string_list = import_kmp(context)
-        create_cube(self, context, sample_string_list)
-        return {'FINISHED'}
-
-def create_cube(self, context, sample_string_list):
-    print("work dammit")
-    counter = 0
+def Cube_Gen(sample_string_list):
     current_index = 0
     position = []
     rotation = []
     scale = []
-    print(sample_string_list)
+    
+    
+    
     if not sample_string_list:
         return []
     else:
-        pass #work here
-                
-                bpy.ops.primitive.primitive_cube_add(2,False,'World',position,scale)
-    #            bpy.context.active_object.rotation_mode = 'XYZ'
-    #            bpy.context.active_object.rotation_euler = rotation
-                bpy.ops.object.move_to_collection(collection_index=current_index)
-                cube = bpy.context.selected_objects[0]
-                cube.name = line
-                
-                current_index += 1
-            counter += 1
+        for element in sample_string_list:
+            for i in range (0, 4):
+                if i == 0:
+                    position = element[i].split(",")[3:5]
+                    #print("Position: " + position[0] + position[1] + position[2])
+                elif i == 1:
+                    rotation = element[i].split(",")[3:5]
+                elif i == 2:
+                    scale = element[i].split(",")[1:3]
+                elif i == 3:
+                    
+                    bpy.ops.mesh.primitive_cube_add(1, location, rotation)
+                    cube.name = 
+                    cube.position = position
+                    cube.rotation_mode = 'XYZ'
+                    cube.rotation_euler = rotation
+                    cube.scale = scale
+                    cube.move_to_collection(current_index)
+                    
+                    current_index += 1
+
     
 #def export_kmp(self, context):
 #    #get collection with info and iterate through all cubes in order and export in the same format as kmp
