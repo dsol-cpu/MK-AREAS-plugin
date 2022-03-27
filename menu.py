@@ -1,5 +1,6 @@
 import bpy
 import os
+import math
 
 from sys import platform
 if platform.startswith("linux"):
@@ -14,7 +15,7 @@ if platform.startswith("cygwin") or platform.startswith("win32") or platform.sta
 else:
     print("What are you on?")
 
-
+scalar_var = 0
 class KMP_Import(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
     bl_label = "KMP Area plugin"
@@ -26,8 +27,8 @@ class KMP_Import(bpy.types.Panel):
         scene = context.scene
         layout = self.layout
         
-#        row = layout.row()
-#        row.prop(scene, "myops.scale_view")
+        row = layout.row()
+        row.prop(scene, "someValue")
 
         row = layout.row()
         row.operator("myops.add_area_cube")
@@ -52,12 +53,13 @@ class Export_KMP(bpy.types.Operator):
         export_kmp(self, context)
         return {'FINISHED'}
 
-class Scale_View(bpy.types.Operator):
-    bl_idname = "myops.scale_view"
-    bl_label = "Scale_View"
-    bl_context = "object"
-    def draw(self, context):
-        return {'FINISHED'}
+
+def whenUpdate(self, context):
+    if bpy.data.collections.get('Area'):
+        for obj in bpy.data.collections.get('Area').all_objects:
+            obj.location /= self.someValue
+            obj.scale *= self.someValue
+    print( 'update', self.someValue )
 
     
 def Import_KMP(context):
@@ -96,7 +98,6 @@ def Write_KMP(lines) :
                         sample_string_list.append(temp)
                         temp = []
                     f.write(','.join(splitted_line)+'\n')
-        print(sample_string_list)
         return(sample_string_list)
 
 
@@ -105,8 +106,6 @@ def Cube_Gen(sample_string_list):
     position = []
     rotation = []
     scale = []
-#    collection = bpy.context.blend_data.collections.new(name='Area')
-#    bpy.context.collection.children.link(collection)
 
     if bpy.data.collections.get('Area'):
         cubes_collection = bpy.data.collections['Area']
@@ -123,21 +122,19 @@ def Cube_Gen(sample_string_list):
             for i in range (0, 4):
                 if i == 0:
                     position = [float(x) for x in element[i].split(",")[3:6]]
-                    #print("Position: " + position[0] + position[1] + position[2])
                 elif i == 1:
                     rotation = [float(x) for x in element[i].split(",")[3:6]]
+                    rotation = [x * math.pi/180 for x in rotation]
                 elif i == 2:
                     scale = [float(x) for x in element[i].split(",")[1:4]]
-                    print(scale)
                 elif i == 3:
                     
                     bpy.ops.mesh.primitive_cube_add()
-                    cube = bpy.context.selected_objects[0]
+                    bpy.context.active_object.rotation_mode = 'XYZ'
                     bpy.context.active_object.location = position
                     bpy.context.active_object.rotation_euler = rotation
                     bpy.context.active_object.scale = scale
-                    bpy.context.active_object.name = "".join(element)
-                    #collection.objects.link(bpy.context.active_object)                   
+                    bpy.context.active_object.name = "".join(element)                  
 
                     current_index += 1
 
@@ -171,8 +168,14 @@ def export_kmp(self, context):
 
 
 
-_classes = [KMP_Import, AREA_Cube, Scale_View, Export_KMP]
+_classes = [KMP_Import, AREA_Cube, Export_KMP]
 def register():
+    
+    bpy.types.Scene.someValue = bpy.props.FloatProperty( 
+    name = "View Factor", 
+    description = "Enter a float", min = -100, max = 100,
+    update = whenUpdate )    
+    
     for element in _classes:
         bpy.utils.register_class(element)
 
