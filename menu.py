@@ -14,8 +14,10 @@ if platform.startswith("cygwin") or platform.startswith("win32") or platform.sta
     path = os.path.dirname(bpy.data.filepath)+"\\"
 else:
     print("What are you on?")
-
-scalar_var = 0
+    
+    
+og_positions = []
+og_scales = []
 class KMP_Import(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
     bl_label = "KMP Area plugin"
@@ -45,6 +47,7 @@ class AREA_Cube(bpy.types.Operator):
         sample_string_list = Import_KMP(context)       
         Cube_Gen(sample_string_list)
         return {'FINISHED'}
+
     
 class Export_KMP(bpy.types.Operator):
     bl_idname = "myops.export_kmp"
@@ -55,11 +58,13 @@ class Export_KMP(bpy.types.Operator):
 
 
 def whenUpdate(self, context):
+    counter = 0
     if bpy.data.collections.get('Area'):
         for obj in bpy.data.collections.get('Area').all_objects:
-            obj.location /= self.someValue
-            obj.scale *= self.someValue
-    print( 'update', self.someValue )
+            print(og_positions[counter])
+            obj.location = [x * self.someValue for x in og_positions[counter]] 
+            obj.scale = [x / self.someValue for x in og_scales[counter]]
+            counter += 1
 
     
 def Import_KMP(context):
@@ -122,11 +127,13 @@ def Cube_Gen(sample_string_list):
             for i in range (0, 4):
                 if i == 0:
                     position = [float(x) for x in element[i].split(",")[3:6]]
+                    og_positions.append(position)
                 elif i == 1:
                     rotation = [float(x) for x in element[i].split(",")[3:6]]
                     rotation = [x * math.pi/180 for x in rotation]
                 elif i == 2:
                     scale = [float(x) for x in element[i].split(",")[1:4]]
+                    og_scales.append(scale)
                 elif i == 3:
                     
                     bpy.ops.mesh.primitive_cube_add()
@@ -173,7 +180,7 @@ def register():
     
     bpy.types.Scene.someValue = bpy.props.FloatProperty( 
     name = "View Factor", 
-    description = "Enter a float", min = -100, max = 100,
+    description = "Enter a float", min = 0.0001, max = 1.0000,
     update = whenUpdate )    
     
     for element in _classes:
