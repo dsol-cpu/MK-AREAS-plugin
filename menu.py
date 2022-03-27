@@ -17,19 +17,21 @@ else:
 
 class KMP_Import(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
-    bl_label = "Kmp area plugin"
+    bl_label = "KMP Area plugin"
     bl_idname = "OBJ_PT_hello"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
-
     def draw(self, context):
+        scene = context.scene
         layout = self.layout
+        
+        row = layout.row()
+        row.prop(scene, "myops.scale_view")
 
         row = layout.row()
         row.operator("myops.add_area_cube")
-        
-        
+
 
 class AREA_Cube(bpy.types.Operator):
     bl_idname = "myops.add_area_cube"
@@ -37,12 +39,20 @@ class AREA_Cube(bpy.types.Operator):
     def execute(self, context):
         #Make a new collection, 
         #bpy.ops.outliner.collection_new(nested=False)
-        sample_string_list = import_kmp(context)       
+        sample_string_list = Import_KMP(context)       
         Cube_Gen(sample_string_list)
         return {'FINISHED'}
 
+
+class Scale_View(bpy.types.Operator):
+    bl_idname = "myops.scale_view"
+    bl_label = "Scale_View"
+    bl_context = "object"
+    def draw(self, context):
+        return {'FINISHED'}
+
     
-def import_kmp(context):
+def Import_KMP(context):
     print("importing!")
     #Decode the KMP file and get the AREAS dataset 
     os.system("wkmpt DECODE " + path + "course.kmp")
@@ -50,10 +60,11 @@ def import_kmp(context):
     #Parse text file for all AREA objects
     file = open(path + "course.txt")
     lines = file.readlines()
-    return(write_kmp(lines))
+    return(Write_KMP(lines))
+
 
 #writes out the area into a much more readable format, return the list of list
-def write_kmp(lines) :
+def Write_KMP(lines) :
     hash_count = 0
     area_sector_count = 0
     print("writing!")
@@ -77,6 +88,7 @@ def write_kmp(lines) :
                         sample_string_list.append(temp)
                         temp = []
                     f.write(','.join(splitted_line)+'\n')
+        print(sample_string_list)
         return(sample_string_list)
 
 
@@ -85,8 +97,8 @@ def Cube_Gen(sample_string_list):
     position = []
     rotation = []
     scale = []
-    
-    
+    collection = bpy.context.blend_data.collections.new(name='Area')
+    bpy.context.collection.children.link(collection)
     
     if not sample_string_list:
         return []
@@ -94,30 +106,29 @@ def Cube_Gen(sample_string_list):
         for element in sample_string_list:
             for i in range (0, 4):
                 if i == 0:
-                    position = element[i].split(",")[3:5]
+                    position = [float(x) for x in element[i].split(",")[3:6]]
                     #print("Position: " + position[0] + position[1] + position[2])
                 elif i == 1:
-                    rotation = element[i].split(",")[3:5]
+                    rotation = [float(x) for x in element[i].split(",")[3:6]]
                 elif i == 2:
-                    scale = element[i].split(",")[1:3]
+                    scale = [float(x) for x in element[i].split(",")[1:4]]
+                    print(scale)
                 elif i == 3:
                     
-                    bpy.ops.mesh.primitive_cube_add(1, location, rotation)
-                    cube.name = 
-                    cube.position = position
-                    cube.rotation_mode = 'XYZ'
-                    cube.rotation_euler = rotation
-                    cube.scale = scale
-                    cube.move_to_collection(current_index)
-                    
+                    bpy.ops.mesh.primitive_cube_add()
+                    bpy.context.active_object.location = position
+                    bpy.context.active_object.rotation_euler = rotation
+                    bpy.context.active_object.scale = scale
+                    bpy.context.active_object.name = "".join(element)
+                    collection.objects.link(bpy.context.active_object)                   
+
                     current_index += 1
 
-    
-#def export_kmp(self, context):
+    #def export_kmp(self, context):
 #    #get collection with info and iterate through all cubes in order and export in the same format as kmp
-#    print("kmp file exported!")    
+#    print("kmp file exported!")
 
-_classes = [KMP_Import, AREA_Cube]
+_classes = [KMP_Import, AREA_Cube, Scale_View]
 def register():
     for element in _classes:
         bpy.utils.register_class(element)
