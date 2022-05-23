@@ -1,5 +1,6 @@
 # MK-AREAS-plugin
 Blender 2.8+ plugin to help create area files
 ## Features
-* Load in areas as cubes
-* Export kmp with new areas
+* Parse and grab AREAS part of KMP file
+* Load in areas as cubes into Blender viewport
+* Export KMP file with new areas
